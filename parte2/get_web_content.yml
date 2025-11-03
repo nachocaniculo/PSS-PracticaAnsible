@@ -1,0 +1,24 @@
+---
+- name: Test Web Content
+  hosts: localhost
+  become: true
+
+  tasks:
+    - name: Retrieve Web Content And Write To Error Log On Failure
+      block:
+        - name: Retrieve Web Content
+          ansible.builtin.uri:
+            url: http://vagrant1
+            return_content: true
+          register: content
+
+        - name: Display Retrieved Content
+          ansible.builtin.debug:
+            msg: "{{ content.content | default('No content retrieved') }}"
+
+      rescue:
+        - name: Write To Error File
+          ansible.builtin.lineinfile:
+            path: ./error.log
+            line: "{{ content | to_nice_json }}"
+            create: true

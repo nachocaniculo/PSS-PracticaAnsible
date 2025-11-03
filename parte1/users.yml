@@ -1,0 +1,35 @@
+---
+- name: Manage Users And Packages On Servers
+  hosts: servidores
+  become: true
+  vars:
+    packages:
+      - memcached
+      - mariadb-server
+
+  tasks:
+    - name: Create User Carlos
+      ansible.builtin.user:
+        name: carlos
+        state: present
+
+    - name: Create User Marta
+      ansible.builtin.user:
+        name: marta
+        state: present
+
+    - name: Install Packages Defined In The Variable Packages
+      ansible.builtin.package:
+        name: "{{ packages }}"
+        state: present
+
+    - name: Check Total Swap Size
+      ansible.builtin.command: free -m
+      register: swap_info
+
+    - name: Install Redis If Total Swap > 20MB
+      ansible.builtin.package:
+        name: redis
+        state: present
+      when: >
+        (swap_info.stdout_lines | select('search', '^Swap') | first).split()[1] | int > 20
